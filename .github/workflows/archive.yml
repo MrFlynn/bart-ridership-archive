@@ -10,13 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        id: pyinstall
+        with:
+          python-version: '3.11' 
       - name: Install pipenv
         run: |
           pip install --user pipenv
       - name: Run collector
         run: |
-          pipenv install
-          pipenv run collec
+          pipenv --python '${{ steps.pyinstall.outputs.python-path }}' install
+          pipenv --python '${{ steps.pyinstall.outputs.python-path }}' run collect
       - name: Commit data
         run: |
           git config user.name "Archive"
