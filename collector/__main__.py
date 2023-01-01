@@ -137,3 +137,7 @@ def main():
         f.seek(0)
         json.dump(ridership, f)
         f.truncate()
+
+
+if __name__ == "__main__":
+    main()

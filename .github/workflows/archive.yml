@@ -14,13 +14,12 @@ jobs:
         id: pyinstall
         with:
           python-version: '3.11' 
-      - name: Install pipenv
+      - name: Install dependencies
         run: |
-          pip install --user pipenv
+          pip install requests beautifulsoup4
       - name: Run collector
         run: |
-          pipenv --python '${{ steps.pyinstall.outputs.python-path }}' install
-          pipenv --python '${{ steps.pyinstall.outputs.python-path }}' run collect
+          python -m collector
       - name: Commit data
         run: |
           git config user.name "Archive"
