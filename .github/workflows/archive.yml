@@ -19,6 +19,7 @@ jobs:
           pip install --user pipenv
       - name: Run collector
         run: |
+          pipenv --python '${{ steps.pyinstall.outputs.python-path }}' update
           pipenv --python '${{ steps.pyinstall.outputs.python-path }}' install
           pipenv --python '${{ steps.pyinstall.outputs.python-path }}' run collect
       - name: Commit data
