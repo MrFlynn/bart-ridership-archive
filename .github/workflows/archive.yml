@@ -10,14 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependecies
-        uses: VaultVulp/action-pipenv@v2.0.1
-        with:
-          command: install
-      - name: Install dependecies
-        uses: VaultVulp/action-pipenv@v2.0.1
-        with:
-          command: run collect
+      - name: Install pipenv
+        run: |
+          pip install --user pipenv
+      - name: Run collector
+        run: |
+          pipenv install
+          pipenv run collec
       - name: Commit data
         run: |
           git config user.name "Archive"
