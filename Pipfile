@@ -15,4 +15,4 @@ python_version = "3.11"
 python_full_version = "3.11.1"
 
 [scripts]
-collect = {call = "collector.__main__:main()"}
+collect = {"call" = "collector.__main__:main()"}
