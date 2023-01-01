@@ -1,0 +1,27 @@
+name: Data Archive
+
+on:
+  push:
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependecies
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: install
+      - name: Install dependecies
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: run collect
+      - name: Commit data
+        run: |
+          git config user.name "Archive"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Archive from $(date -u)" || exit 0
+          git push
