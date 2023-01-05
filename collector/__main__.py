@@ -10,6 +10,7 @@ import requests
 from bs4 import BeautifulSoup, element
 from collections import OrderedDict
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, auto
 
 from typing import Iterable, List, Mapping, Tuple
@@ -57,21 +58,38 @@ class DayRidership:
     _valid: bool = False
 
     def __post_init__(self):
-        self._valid = True
+        self._valid = all(
+            [
+                self._validate_date(),
+                self._extract_ridership(),
+                self._extract_baseline_percent(),
+            ]
+        )
 
-        if not re.match(r"^\d{1,2}/\d{1,2}/\d{1,2}$", self.date):
-            self._valid = False
-            return
+    def _validate_date(self) -> bool:
+        try:
+            datetime.strptime(self.date, "%m/%d/%y")
+            return True
+        except ValueError:
+            pass
 
+        return False
+
+    def _extract_ridership(self) -> bool:
         try:
             if (
                 riders_matcher := re.match(r"((\d{1,3})?,?(\d{1,3}))", self.riders)
             ) != None:
                 self._riders = int(re.sub(r",", "", riders_matcher.group(1)))
-            else:
-                self._valid = False
-                return
 
+                return True
+        except ValueError:
+            pass
+
+        return False
+
+    def _extract_baseline_percent(self) -> bool:
+        try:
             if (
                 percent_matcher := re.match(r"-?(\d+)%?", self.percent_baseline)
             ) != None:
@@ -81,12 +99,12 @@ class DayRidership:
                     self._percent_baseline = 100 - value
                 else:
                     self._percent_baseline = value
-            else:
-                self._valid = False
-        except ValueError:
-            self._valid = False
 
-        return
+                return True
+        except ValueError:
+            pass
+
+        return False
 
     @property
     def valid(self) -> bool:
