@@ -27,3 +27,22 @@ jobs:
           git add -A
           git commit -m "Archive from $(date -u)" || exit 0
           git push
+  update-badge:
+    runs-on: ubuntu-latest
+    needs: scheduled
+    steps:
+      - uses: actions/checkout@v2
+      - name: Extract latest ridership value and set environment variables
+        run: |
+          jq -r \
+            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key) RIDERS=\(.value.riders)"' \
+            ridership.json >> $GITHUB_ENV
+      - uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: e734700d586151d29d8da4b56639d8d7 
+          filename: riders.json
+          label: ${{ env.DATE }}
+          message: ${{ env.RIDERS }}
+          color: blue
+

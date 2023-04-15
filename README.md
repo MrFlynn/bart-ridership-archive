@@ -1,5 +1,7 @@
 # BART Ridership Archive
 
+![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/MrFlynn/e734700d586151d29d8da4b56639d8d7/raw/riders.json)
+
 An automatic, daily backup of ridership data from BART (Bay Area Rapid Transit)
 saved as a JSON file. 
 
