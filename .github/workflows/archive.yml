@@ -35,8 +35,8 @@ jobs:
       - name: Extract latest ridership value and set environment variables
         run: |
           jq -r \
-            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key) RIDERS=\(.value.riders)"' \
-            ridership.json >> $GITHUB_ENV
+            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key)\nRIDERS=\(.value.riders)"' \
+            ridership.json | tr -d "'" >> $GITHUB_ENV
       - uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
