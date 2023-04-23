@@ -32,6 +32,9 @@ jobs:
     needs: scheduled
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: main
       - name: Extract latest ridership value and set environment variables
         run: |
           jq -r \
