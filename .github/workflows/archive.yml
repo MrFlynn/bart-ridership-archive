@@ -9,7 +9,7 @@ jobs:
   scheduled:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         id: pyinstall
         with:
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: scheduled
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: main
