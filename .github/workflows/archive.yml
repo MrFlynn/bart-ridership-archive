@@ -2,6 +2,8 @@ name: Data Archive
 
 on:
   push:
+    branches:
+      - main
   schedule:
     - cron: '0 5 * * *'
 
@@ -13,7 +15,7 @@ jobs:
       - uses: actions/setup-python@v4
         id: pyinstall
         with:
-          python-version: '3.11' 
+          python-version: '3.11'
       - name: Install dependencies
         run: |
           pip install requests beautifulsoup4
@@ -43,9 +45,8 @@ jobs:
       - uses: schneegans/dynamic-badges-action@v1.6.0
         with:
           auth: ${{ secrets.GIST_TOKEN }}
-          gistID: e734700d586151d29d8da4b56639d8d7 
+          gistID: e734700d586151d29d8da4b56639d8d7
           filename: riders.json
           label: ${{ env.DATE }}
           message: ${{ env.RIDERS }}
           color: blue
-
