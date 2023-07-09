@@ -9,7 +9,6 @@ import requests
 
 from bs4 import BeautifulSoup, element
 from collections import OrderedDict
-from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 
@@ -49,74 +48,77 @@ class Percentage(Enum):
         return cls.Invalid
 
 
-@dataclass
-class DayRidership:
-    date: str = ""
-    riders: str = ""
-    percent_baseline: str = ""
-    percent_type: Percentage = Percentage.OfBaseline
+class ParseRowError(Exception):
+    def __init__(
+        self,
+        message: str,
+        field_name: str,
+        row: List[element.PageElement],
+    ) -> None:
+        super().__init__(message)
 
-    _riders: int = 0
-    _percent_baseline: int = 0
-    _valid: bool = False
+        self.message = message
+        self.field_name = field_name
+        self.row = row
 
-    def __post_init__(self):
-        self._valid = all(
-            [
-                self._validate_date(),
-                self._extract_ridership(),
-                self._extract_baseline_percent(),
-            ]
+    def __str__(self) -> str:
+        return (
+            f"Error parsing field {self.field_name} in row {self.row}: {self.message}."
         )
 
-    def _validate_date(self) -> bool:
+
+class DayRidership:
+    def __init__(
+        self,
+        row: List[element.PageElement],
+        percent_type: Percentage = Percentage.Invalid,
+    ) -> None:
+        self.date = ""
+        self.riders = 0
+        self.percent_baseline = 0
+        self.percent_type = percent_type
+
+        # Extract fields from row.
+        self._get_date(row)
+        self._get_ridership(row)
+        self._get_percent_baseline(row)
+
+    def _get_date(self, row: List[element.PageElement]):
         try:
-            datetime.strptime(self.date, "%m/%d/%y")
-            return True
+            self.date = row[0].text.strip()
+            _ = datetime.strptime(self.date, "%m/%d/%y")
         except ValueError:
-            pass
+            raise ParseRowError("invalid date format", "date", row)
 
-        return False
-
-    def _extract_ridership(self) -> bool:
+    def _get_ridership(self, row: List[element.PageElement]):
         try:
-            if (
-                riders_matcher := re.match(r"((\d{1,3})?,?(\d{1,3}))", self.riders)
-            ) != None:
-                self._riders = int(re.sub(r",", "", riders_matcher.group(1)))
-
-                return True
+            riders_re = re.match(r"((\d{1,3})?,?(\d{1,3}))", row[1].text.strip())
+            if riders_re:
+                self.riders = int(re.sub(r",", "", riders_re.group(1)))
         except ValueError:
-            pass
+            raise ParseRowError("invalid numerical value for riders", "riders", row)
 
-        return False
-
-    def _extract_baseline_percent(self) -> bool:
+    def _get_percent_baseline(self, row: List[element.PageElement]):
         try:
-            if (
-                percent_matcher := re.match(r"-?(\d+)%?", self.percent_baseline)
-            ) != None:
-                value = int(percent_matcher.group(1))
-
-                if self.percent_type == Percentage.BelowBaseline:
-                    self._percent_baseline = 100 - value
-                else:
-                    self._percent_baseline = value
-
-                return True
+            percentage_re = re.match(r"-?(\d+)%?", row[2].text.strip())
+            if percentage_re:
+                value = int(percentage_re.group(1))
+                self.percent_baseline = (
+                    100 - value
+                    if self.percent_type == Percentage.BelowBaseline
+                    else value
+                )
         except ValueError:
-            pass
-
-        return False
-
-    @property
-    def valid(self) -> bool:
-        return self._valid
+            raise ParseRowError(
+                "invalid numerical value for percentage",
+                "percent_baseline",
+                row,
+            )
 
     def to_dict(self) -> Tuple[str, Mapping[str, int]]:
         return self.date, {
-            "riders": self._riders,
-            "percent_baseline": self._percent_baseline,
+            "riders": self.riders,
+            "percent_baseline": self.percent_baseline,
         }
 
 
@@ -130,12 +132,10 @@ def get_ridership_from_rows(
             continue
 
         for i in range(0, len(columns), 3):
-            yield DayRidership(
-                date=columns[i].text.strip(),
-                riders=columns[i + 1].text.strip(),
-                percent_baseline=columns[i + 2].text.strip(),
-                percent_type=percent_type,
-            )
+            try:
+                yield DayRidership(columns[i : i + 3], percent_type=percent_type)
+            except ParseRowError as e:
+                print(str(e) + " Skipping...")
 
 
 def parse_tables(content: str) -> Iterator[DayRidership]:
@@ -162,8 +162,7 @@ def main():
 
     ridership = {}
     for day_ridership in parse_tables(content.text):
-        if day_ridership.valid:
-            ridership.setdefault(*day_ridership.to_dict())
+        ridership.setdefault(*day_ridership.to_dict())
 
     ridership = OrderedDict(sorted(ridership.items()))
 
