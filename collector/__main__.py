@@ -83,6 +83,12 @@ class DayRidership:
         self._get_ridership(row)
         self._get_percent_baseline(row)
 
+        if self.riders == 0:
+            raise ParseRowError("field is zero", "riders", row)
+
+        if self.percent_baseline == 0:
+            raise ParseRowError("field is zero", "percent_baseline", row)
+
     def _get_date(self, row: List[element.PageElement]):
         try:
             self.date = row[0].text.strip()
