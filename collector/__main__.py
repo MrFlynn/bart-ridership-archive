@@ -13,10 +13,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 
-from typing import Iterable, List, Mapping, Tuple
+from typing import Iterator, List, Mapping, Tuple
 
 RIDERSHIP_DATA_URL = "https://www.bart.gov/news/articles/2020/news20200225"
-DEFAULT_TABLE_ATTRS = {"summary": "Ridership during COVID-19"}
 
 
 class Percentage(Enum):
@@ -28,22 +27,26 @@ class Percentage(Enum):
     def from_string(cls, s: str) -> "Percentage":
         if re.match(r"% below baseline", s, re.IGNORECASE):
             return cls.BelowBaseline
-        elif re.match(r"% of baseline", s, re.IGNORECASE):
+        elif re.match(r"% of baseline", s, re.IGNORECASE) or re.match(
+            r"% of pre-pandemic", s, re.IGNORECASE
+        ):
             return cls.OfBaseline
         else:
             return cls.Invalid
 
     @classmethod
-    def from_table_headers(cls, ti: Iterable[element.Tag]) -> "Percentage":
-        rows = list(ti)
-        if len(rows) > 1:
-            for el in rows[1].children:
-                if (typ := cls.from_string(el.text)) != cls.Invalid:
-                    return typ
+    def from_table_headers(cls, ti: Iterator[element.Tag]) -> "Percentage":
+        try:
+            _ = next(ti)  # Ignore first row
+            header_row = next(ti)
 
-            return cls.OfBaseline
-        else:
-            return cls.OfBaseline
+            for column in header_row.children:
+                if (t := cls.from_string(column.text)) != cls.Invalid:
+                    return t
+        except StopIteration:
+            pass
+
+        return cls.Invalid
 
 
 @dataclass
@@ -117,28 +120,41 @@ class DayRidership:
         }
 
 
-def get_ridership_from_row(
-    row: List[str], percent_type: Percentage
-) -> Iterable[DayRidership]:
-    if len(row) % 3 != 0:
-        return
+def get_ridership_from_rows(
+    rows: Iterator[element.Tag], percent_type: Percentage
+) -> Iterator[DayRidership]:
+    for row in rows:
+        columns = list(row.children)
 
-    for i in range(0, len(row), 3):
-        yield DayRidership(row[i], row[i + 1], row[i + 2], percent_type)
+        if len(columns) % 3 != 0:
+            continue
+
+        for i in range(0, len(columns), 3):
+            yield DayRidership(
+                date=columns[i].text.strip(),
+                riders=columns[i + 1].text.strip(),
+                percent_baseline=columns[i + 2].text.strip(),
+                percent_type=percent_type,
+            )
 
 
-def parse_tables(content: str) -> Iterable[DayRidership]:
+def parse_tables(content: str) -> Iterator[DayRidership]:
     parser = BeautifulSoup(content, "html.parser")
 
-    for table in parser.find_all("table", attrs=DEFAULT_TABLE_ATTRS):
-        if len(table_body_list := list(table.children)) > 1:
-            headers, data = table_body_list[0], table_body_list[1]
+    for table in parser.find_all("table"):
+        table_body_list = list(filter(lambda e: e.name == "tbody", table.children))
+        percentage_type = Percentage.Invalid
+        data: Iterator[element.Tag] = iter(())
 
-            percent_type = Percentage.from_table_headers(headers)
-            for row in data.children:
-                yield from get_ridership_from_row(
-                    [el.text.strip() for el in row.children], percent_type
-                )
+        if len(table_body_list) == 1:
+            data = iter(table_body_list[0])
+            percentage_type = Percentage.from_table_headers(data)
+        elif len(table_body_list) == 2:
+            headers, data = iter(table_body_list[0]), iter(table_body_list[1])
+            percentage_type = Percentage.from_table_headers(headers)
+
+        if percentage_type != Percentage.Invalid:
+            yield from get_ridership_from_rows(data, percentage_type)
 
 
 def main():
