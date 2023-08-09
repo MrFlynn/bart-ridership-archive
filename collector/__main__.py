@@ -3,6 +3,7 @@
 # Parses ridership data tables on BART's (Bay Area Rapid Transit) website and
 # saves them to a JSON file.
 
+import itertools
 import json
 import re
 import requests
@@ -35,15 +36,11 @@ class Percentage(Enum):
 
     @classmethod
     def from_table_headers(cls, ti: Iterator[element.Tag]) -> "Percentage":
-        try:
-            _ = next(ti)  # Ignore first row
-            header_row = next(ti)
-
-            for column in header_row.children:
+        # Only want to consume up to the first two rows.
+        for row in itertools.islice(ti, 0, 2):
+            for column in row.children:
                 if (t := cls.from_string(column.text)) != cls.Invalid:
                     return t
-        except StopIteration:
-            pass
 
         return cls.Invalid
 
