@@ -5,6 +5,7 @@
 
 import itertools
 import json
+import os
 import re
 import requests
 
@@ -15,7 +16,9 @@ from enum import Enum, auto
 
 from typing import Iterator, List, Mapping, Tuple
 
-RIDERSHIP_DATA_URL = "https://www.bart.gov/news/articles/2020/news20200225"
+RIDERSHIP_DATA_URL = os.getenv(
+    "RIDERSHIP_DATA_URL", "https://www.bart.gov/news/articles/2023/news20230729"
+)
 
 
 class Percentage(Enum):
