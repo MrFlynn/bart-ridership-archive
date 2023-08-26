@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup, element
 from collections import OrderedDict
 from datetime import datetime
 from enum import Enum, auto
+from pathlib import Path
 
 from typing import Iterator, List, Mapping, Tuple
 
@@ -166,13 +167,22 @@ def parse_tables(content: str) -> Iterator[DayRidership]:
 def main():
     content = requests.get(RIDERSHIP_DATA_URL)
 
-    ridership = {}
-    for day_ridership in parse_tables(content.text):
-        ridership.setdefault(*day_ridership.to_dict())
+    ridership_file = Path("ridership.json")
+    if not ridership_file.exists():
+        ridership_file.touch()
 
-    ridership = OrderedDict(sorted(ridership.items()))
+    with ridership_file.open("r+") as f:
+        ridership = {}
 
-    with open("ridership.json", "w+") as f:
+        size = ridership_file.stat().st_size
+        if size != 0:
+            ridership = json.load(f)
+
+        for day_ridership in parse_tables(content.text):
+            ridership.setdefault(*day_ridership.to_dict())
+
+        ridership = OrderedDict(sorted(ridership.items()))
+
         f.seek(0)
         json.dump(ridership, f)
         f.truncate()
