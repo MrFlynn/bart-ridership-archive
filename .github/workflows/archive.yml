@@ -14,8 +14,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install moreutils
         run: |
-          apt update
-          apt install -y --no-install-recommends --no-install-suggests moreutils
+          sudo apt update
+          sudo apt install -y --no-install-recommends --no-install-suggests moreutils
       - uses: MrFlynn/flyscrape-action@v1
         id: scrape
         with:
