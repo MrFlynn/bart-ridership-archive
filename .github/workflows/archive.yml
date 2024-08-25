@@ -12,16 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        id: pyinstall
+      - name: Install moreutils
+        run: |
+          apt update
+          apt install -y --no-install-recommends --no-install-suggests moreutils
+      - uses: MrFlynn/flyscrape-action@v1
+        id: scrape
         with:
-          python-version: '3.11'
-      - name: Install dependencies
+          script: 'scripts/ridership.js'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update ridership.json
         run: |
-          pip install requests beautifulsoup4
-      - name: Run collector
-        run: |
-          python -m collector
+          jq -cs \
+            '(.[0] * (.[1] | first | .data)) | to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | from_entries' \
+            ridership.json <(echo '${{ steps.scrape.outputs.output }}') | sponge ridership.json
       - name: Commit data
         run: |
           git config user.name "Archive"
