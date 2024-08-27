@@ -21,7 +21,7 @@ export default function ({ doc, url, absoluteURL }) {
                     (percentMatch = percent.match(/^([0-9]{1,3})%$/)) !== null 
                 ) {
                     entries[date] = {
-                        ridership: ridership, 
+                        riders: ridership, 
                         percent_baseline: Number.parseInt(percentMatch[0]),
                     }
                 }
