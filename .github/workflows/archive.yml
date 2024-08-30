@@ -42,10 +42,15 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
+      - name: Read logo file
+        id: logo
+        uses: juliangruber/read-file-action@v1
+        with:
+          path: ./doc/logo.svg
       - name: Extract latest ridership value and set environment variables
         run: |
           jq -r \
-            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key)\nRIDERS=\(.value.riders)"' \
+            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key)\nRIDERS=\(.value.riders)\nPERCENT=\(.value.percent_baseline)"' \
             ridership.json | tr -d "'" >> $GITHUB_ENV
       - uses: schneegans/dynamic-badges-action@v1.7.0
         with:
@@ -53,5 +58,6 @@ jobs:
           gistID: e734700d586151d29d8da4b56639d8d7
           filename: riders.json
           label: ${{ env.DATE }}
-          message: ${{ env.RIDERS }}
+          message: "${{ env.RIDERS }} - ${{ env.PERCENT }}%"
+          logoSvg: "${{ steps.logo.outputs.content }}"
           color: blue
