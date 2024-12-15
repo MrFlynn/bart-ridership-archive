@@ -20,7 +20,7 @@ jobs:
         id: scrape
         with:
           script: 'scripts/ridership.js'
-          version: '0.9.0'
+          version: 'v0.8.1'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Update ridership.json
