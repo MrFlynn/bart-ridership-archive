@@ -2,11 +2,10 @@ export const config = {
     url: "https://www.bart.gov/news/articles/2025/news20250109-1",
 }
 
-export default function ({ doc, url, absoluteURL }) {
-    var entries = {}
+export default function ({ doc, _ }) {
     const rows = doc.find("tr")
 
-    rows.map(row => {
+    return rows.map(row => {
         const items = row.children()
 
         if (items.length % 2 == 0) {
@@ -18,9 +17,10 @@ export default function ({ doc, url, absoluteURL }) {
                     date.match(/^([0-9]{1,2}\/){2}[0-9]{1,2}$/) !== null &&
                     ridership > 0
                 ) {
-                    entries[date] = {
+                    return {
+                        date: date,
                         riders: ridership,
-
+                        
                         // BART stopped providing this information in 2025. A filler
                         // value is provided to keep the data scheme the same.
                         percent_baseline: -1,
@@ -28,7 +28,14 @@ export default function ({ doc, url, absoluteURL }) {
                 }
             }
         }
-    })
+    }).reduce((accumulator, entry) => {
+        if (entry !== null) {
+            accumulator[entry.date] = {
+                riders: entry.riders,
+                percent_baseline: entry.percent_baseline,
+            }
+        }
 
-    return entries
+        return accumulator
+    }, {})
 }
