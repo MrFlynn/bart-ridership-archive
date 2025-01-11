@@ -16,7 +16,7 @@ export default function ({ doc, url, absoluteURL }) {
 
                 if (
                     date.match(/^([0-9]{1,2}\/){2}[0-9]{1,2}$/) !== null &&
-                    (ridership != 0 && ridership !== null && ridership !== undefined)
+                    ridership > 0
                 ) {
                     entries[date] = {
                         riders: ridership,
