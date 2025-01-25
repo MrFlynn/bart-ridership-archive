@@ -14,7 +14,7 @@ read_csv(
     '/dev/stdin', 
     header=False, 
     columns={'date': 'DATE', 'riders': 'UINTEGER', 'percent_baseline': 'UTINYINT'}, 
-    dateformat='%-m/%-d/%-y'
+    dateformat='%Y-%m-%d'
 )
 EOF
 

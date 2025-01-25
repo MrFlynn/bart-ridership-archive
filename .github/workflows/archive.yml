@@ -26,7 +26,7 @@ jobs:
       - name: Update ridership.json
         run: |
           jq -cs \
-            '(.[0] * (.[1] | first | .data)) | to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | from_entries' \
+            '(.[0] * (.[1] | first | .data)) | to_entries | sort_by(.key |= (strptime("%Y-%m-%d") | mktime)) | from_entries' \
             ridership.json <(echo '${{ steps.scrape.outputs.output }}') | sponge ridership.json
       - name: Commit data
         run: |
@@ -51,7 +51,7 @@ jobs:
       - name: Extract latest ridership value and set environment variables
         run: |
           jq -r \
-            'to_entries | sort_by(.key |= (strptime("%m/%d/%y") | mktime)) | last | @sh "DATE=\(.key)\nRIDERS=\(.value.riders)\nPERCENT=\(.value.percent_baseline)"' \
+            'to_entries | sort_by(.key |= (strptime("%Y-%m-%d") | mktime)) | last | @sh "DATE=\(.key)\nRIDERS=\(.value.riders)\nPERCENT=\(.value.percent_baseline)"' \
             ridership.json | tr -d "'" >> $GITHUB_ENV
       - uses: schneegans/dynamic-badges-action@v1.7.0
         with:
