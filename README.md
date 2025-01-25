@@ -7,7 +7,7 @@ saved as a JSON file.
 
 ## How it Works
 BART (usually) updates a table on 
-[this page](https://www.bart.gov/news/articles/2020/news20200225) with daily
+[this page](https://www.bart.gov/news/articles/2025/news20250109-1) with daily
 ridership numbers. This repository contains [a script](scripts/ridership.js)
 that is executed with [flyscrape](https://github.com/philippta/flyscrape)
 that parses the tables on this page and saves data to a JSON file called
