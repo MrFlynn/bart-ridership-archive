@@ -8,20 +8,22 @@
 DB_FILE="ridership.duckdb"
 
 read -rd '' CREATE_QUERY << EOF
-CREATE TABLE ridership
-AS SELECT * FROM
-read_csv(
-    '/dev/stdin', 
-    header=False, 
-    columns={'date': 'DATE', 'riders': 'UINTEGER', 'percent_baseline': 'UTINYINT'}, 
-    dateformat='%Y-%m-%d'
-)
+CREATE TABLE
+    ridership
+AS SELECT
+    entries.key::DATE as date,
+    entries.value.riders,
+    entries.value.percent_baseline
+FROM (
+    SELECT
+        unnest(map_entries(json)) as entries
+    FROM 
+        read_json('$(git rev-parse --show-toplevel)/ridership.json')
+);
 EOF
 
 if [[ -f "$DB_FILE" ]]; then
     duckdb -c "DROP TABLE IF EXISTS ridership" "$DB_FILE"
 fi
 
-jq -r \
-    'to_entries[] | [.key, .value.riders, .value.percent_baseline] | @csv' ridership.json \
-    | duckdb -c "$CREATE_QUERY" "$DB_FILE"
+duckdb -c "$CREATE_QUERY" "$DB_FILE"
