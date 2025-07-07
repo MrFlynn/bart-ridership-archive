@@ -12,10 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install moreutils
-        run: |
-          sudo apt update
-          sudo apt install -y --no-install-recommends --no-install-suggests moreutils
       - uses: MrFlynn/flyscrape-action@v1
         id: scrape
         with:
@@ -27,7 +23,8 @@ jobs:
         run: |
           jq -cs \
             '(.[0] * (.[1] | first | .data)) | to_entries | sort_by(.key |= (strptime("%Y-%m-%d") | mktime)) | from_entries' \
-            ridership.json <(echo '${{ steps.scrape.outputs.output }}') | sponge ridership.json
+            ridership.json <(echo '${{ steps.scrape.outputs.output }}') > new.json
+          mv new.json ridership.json
       - name: Commit data
         run: |
           git config user.name "Archive"
